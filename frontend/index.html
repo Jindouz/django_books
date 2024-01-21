@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Django Book CRUD</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+</head>
+
+<body>
+
+    <div>
+        <h2>Django Books CRUD</h2>
+
+        <h3>Add Book</h3>
+        <form id="addForm">
+            <label for="name">Name:</label>
+            <input type="text" id="name" required>
+            <br>
+            <label for="author">Author:</label>
+            <input type="text" id="author" required>
+            <br>
+            <label for="year">Year:</label>
+            <input type="number" id="year" required>
+            <br>
+            <button type="button" onclick="addBook()">Add Book</button>
+        </form>
+
+        <h3>Book List</h3>
+        <ul id="bookList"></ul>
+    </div>
+
+    <script>
+
+        const SERVER = 'http://127.0.0.1:8000/';
+
+
+        const fetchBooks = async () => {
+            try {
+                const response = await axios.get(SERVER);
+                const books = response.data;
+                
+                const bookList = document.getElementById('bookList');
+                bookList.innerHTML = '';
+                books.forEach(book => {
+                    const li = document.createElement('li');
+                    li.textContent = `${book.name} by ${book.author} (${book.year})`;
+
+                    // Edit button
+                    const editButton = document.createElement('button');
+                    editButton.textContent = 'Edit';
+                    editButton.onclick = () => editBook(book.id, book.name, book.author, book.year);
+                    li.appendChild(editButton);
+
+                    // Delete button
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteBook(book.id);
+                    li.appendChild(deleteButton);
+
+                    bookList.appendChild(li);
+                });
+            } catch (error) {
+                console.error('Error fetching books:', error);
+            }
+        }
+
+
+        const addBook = async () => {
+            const name = document.getElementById('name').value;
+            const author = document.getElementById('author').value;
+            const year = document.getElementById('year').value;
+
+            try {
+                await axios.post(SERVER, { name, author, year });
+                fetchBooks();
+            } catch (error) {
+                console.error('Error adding book:', error);
+            }
+        }
+
+
+        const deleteBook = async (id) => {
+            try {
+                await axios.delete(`${SERVER}${id}`);
+                fetchBooks();
+            } catch (error) {
+                console.error('Error deleting book:', error);
+            }
+        }
+
+
+        const editBook = (id, name, author, year) => {
+            document.getElementById('name').value = name;
+            document.getElementById('author').value = author;
+            document.getElementById('year').value = year;
+
+            // Create an "Update" button for editing
+            const updateButton = document.createElement('button');
+            updateButton.textContent = 'Update';
+            updateButton.onclick = () => updateBook(id);
+            document.getElementById('addForm').appendChild(updateButton);
+        }
+
+
+        const updateBook = async (id) => {
+            const name = document.getElementById('name').value;
+            const author = document.getElementById('author').value;
+            const year = document.getElementById('year').value;
+
+            try {
+                await axios.put(`${SERVER}${id}`, { name, author, year });
+                fetchBooks();
+                // Remove the "Update" button after updating
+                const updateButton = document.querySelector('button[textContent="Update"]');
+                if (updateButton) {
+                    updateButton.remove();
+                }
+            } catch (error) {
+                console.error('Error updating book:', error);
+            }
+        }
+
+
+        fetchBooks();
+    </script>
+
+</body>
+
+</html>
